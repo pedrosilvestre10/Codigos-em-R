@@ -1,0 +1,121 @@
+---
+title: "Titanic"
+author: "Pedro Silvestre"
+date: "2023-09-01"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("ggplot2")
+```
+
+## 1. Introdução
+
+Neste projeto, vamos analisar e realizar uma estatística descritiva do conjunto de dados do Titanic, que contém algumas variáveis que podem ou não explicar a probabilidade de sobrevivência de cada passageiro ao desastre.
+
+Inicialmente, analisaremos os gráficos e tiraremos algumas conclusões sobre essas variáveis.
+
+
+```{r lendo os dados}
+titanic <- read.csv("titanic.csv")
+summary(titanic)
+str(titanic)
+```
+
+Conforme podemos ver, temos 891 observações e 12 variáveis, sendo que a primeira apenas enumera nossa base de dados, portanto, não será necessária para a nossa análise.
+
+Aproveitaremos para transformar as variáveis necessárias em fatores.
+
+```{r ajustando os dados e transformando em fator}
+titanic$Survived <- as.factor(titanic$Survived)
+titanic$Sex <- as.factor(titanic$Sex)
+titanic$Embarked <- as.factor(titanic$Embarked)
+titanic$Pclass <- as.factor(titanic$Pclass)
+titanic <- titanic[,-1]
+
+```
+
+
+## 2. Análise dos Dados
+
+O primeiro gráfico que decidimos analisar foi o de mortes de acordo com o sexo:
+
+```{r grafico sexo, fig.show='hold'}
+ggplot(data = titanic, aes(x = Sex, fill = Survived))+
+  geom_bar()+
+  labs(title = "Morte por sexo",
+       x = "Sexo",
+       y = "Quantidade")+
+  scale_fill_discrete(name = "Sobrevivencia", labels = c("Não sobreviveu", "Sobreviveu"))
+```
+Como podemos observar, a taxa de sobrevivência das mulheres foi muito maior.
+
+Outra variável altamente explicativa é a classe, como podemos ver abaixo:
+
+```{r grafico classe, fig.show='hold'}
+ggplot(data = titanic, aes(x = Pclass, fill = Survived))+
+  geom_bar()+
+  labs(title = "Morte por classe",
+       x = "Classe",
+       y = "Quantidade")+
+  scale_fill_discrete(name = "Sobrevivencia", labels = c("Não sobreviveu", "Sobreviveu"))
+```
+
+Quem estava na classe 3 estava muito mais suscetível a não sobreviver.
+
+Outra variável que podemos observar é o local de embarque:
+
+```{r grafico embarque, fig.show='hold'}
+ggplot(data = titanic, aes(x = Embarked, fill = Survived))+
+  geom_bar()+
+  labs(title = "Morte por local de embarque",
+       x = "Local de embarque",
+       y = "Quantidade")+
+  scale_fill_discrete(name = "Sobrevivencia", labels = c("Não sobreviveu", "Sobreviveu"))
+```
+
+Já a idade é uma variável com muitos dados faltantes. Como o número de dados faltantes é alto, atribuiremos a cada valor "NA" a média de idade dos restantes.
+
+```{r corrigindo as idades faltantes e grafico, fig.show='hold'}
+faltantes <- is.na(titanic$Age)
+
+titanic[faltantes,5] <- round(mean(titanic[!faltantes,5]))
+
+ggplot(data = titanic, aes(x = Age, fill = Survived))+
+  geom_histogram()+
+  labs(title = "Grafico por idade",
+       x = "Idade",
+       y = "Quantidade")+
+  scale_fill_discrete(name = "Sobrevivencia", labels = c("Não sobreviveu", "Sobreviveu"))
+```
+
+Já em relação à quantidade de parentes que embarcaram junto com cada indivíduo, obtemos o seguinte gráfico:
+
+```{r grafico qtd parentes, fig.show='hold'}
+ggplot(data = titanic, aes(x = SibSp, fill = Survived))+
+  geom_bar()+
+  labs(title = "Morte por quantidade de parentes no navio",
+       x = "Qtd de parentes",
+       y = "Quantidade")+
+  scale_fill_discrete(name = "Sobrevivencia", labels = c("Não sobreviveu", "Sobreviveu"))
+```
+
+Este já nos mostra que a probabilidade de sobrevivência quando se tinha mais de 2 parentes no navio era quase nula.
+
+```{r grafico tarifa, fig.show='hold'}
+ggplot(data = titanic, aes(x = Fare, y = Sex , color = Survived))+
+  geom_jitter()+
+  labs(title = "Morte por Sexo e Tarifa",
+       x = "Valor do tiquete",
+       y = "Sexo")+
+  scale_fill_discrete(name = "Sobrevivencia", labels = c("Não sobreviveu", "Sobreviveu"))
+```
+
+Outro gráfico interessante é o da tarifa cobrada por entrada, onde vemos que os que compraram os bilhetes mais caros tiveram uma probabilidade maior de sobrevivência.
+
+## Conclusão
+
+Pode-se concluir que a variável mais explicativa de todas é a do sexo, já que a probabilidade de sobrevivência foi muito maior para indivíduos do sexo feminino. O conjunto de variáveis também inclui outras variáveis relevantes para explicar o comportamento, como a Classe, onde a maioria das pessoas da Classe 3 não sobreviveu.
+
+Por outro lado, variáveis como idade, devido ao grande número de dados faltantes, não contribuem muito para a nossa análise.

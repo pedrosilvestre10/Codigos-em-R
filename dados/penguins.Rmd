@@ -1,0 +1,25 @@
+---
+title: "Penguins"
+author: "Pedro Silvestre"
+date: "2023-08-15"
+output: 
+  html_document:
+   number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Introdução
+```{r}
+library(ggplot2)
+```
+
+Neste relatorio, analisaremos um conjunto que contem informações sobre especies de pinguins. A seguir, vamos importar o arquivo e imprimir sua estrura
+
+```{r lendo dados}
+pinguim <- read.csv("pinguim.csv", header = T)
+str(pinguim)
+```
+
+Este conjunto possui `r nrow(pinguim)` observações e `r ncol(pinguim)` variaveis

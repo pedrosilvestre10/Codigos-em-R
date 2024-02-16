@@ -1,0 +1,175 @@
+---
+title: "Laboratório 5"
+author: "Pedro Silvestre"
+date: "2023-10-31"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+set.seed(12278)
+
+```
+
+# Introdução
+
+Vamos trabalhar com o conjunto de dados "data.csv" que diz respeito ao conjunto de dados de câncer de mama Wisconsin. Neste conjunto eles armazenam algumas variaveis de uma amostra de células de câncer de mama. A variável resposta é se o tumor é maligno ou benigno.
+
+```{r lendo os dados}
+dados <- read.csv("data.csv")
+str(dados)
+```
+
+Temos 32 variaveis, sendo que a primeira é o id, a segunda é a variavel resposta e as outras 30 são variaveis preditoras. Vamos remover a primeira variavel e a ultima variavel que é a variavel resposta.
+
+```{r ajustando os dados e separando em treino e teste}
+dados <- dados[,2:32]
+head(dados)
+str(dados)
+
+dados$diagnosis <- as.factor(dados$diagnosis)
+
+n <- 0.8*nrow(dados)
+
+dados <- dados[sample(nrow(dados)),]
+treino <- dados[1:n,]
+teste <- dados[-(1:n),]
+```
+
+Nesta sessão nós dividimos os dados em treino e teste, e também transformamos a variavel resposta em fator.
+
+# Modelagem e resultados
+
+## K Nearest Neighbors
+
+Primeiro vamos ler a biblioteca e calcular o melhor k para o modelo. Primeiro vamos fazer o cross validation com 10 pastas
+
+
+```{r knn parte 1}
+library(class)
+
+indices <- seq(0, n, by = n/10)
+
+medida_mod <- c()
+medidas <- c()
+
+for (k in 1:30) {
+  for (j in 1:10) {
+    a <- (indices[j]+1)
+    b <- (indices[j+1])
+    teste_cross <- treino[(a:b),]
+    treino_cross <- treino[-(a:b),]
+    mod_cv <- knn(train = scale(treino_cross[,-1]), test = scale(teste_cross[,-1]), k, cl = treino_cross$diagnosis)
+    medidas[j] <- mean(mod_cv == teste_cross$diagnosis)
+  }
+  medida_mod[k] <- mean(medidas)
+}
+```
+
+Agora vamos plotar um grafico para ver qual o melhor k. Além do recurso visual vamos usar o which.max para determinar qual de fato é o melhor k.
+
+```{r knn parte 2}
+acuracias <- data.frame(k = 1:30, medida_mod)
+plot(x = 1:30, y = acuracias$medida, type = "l")
+melhor_k <- which.max(acuracias$medida_mod)
+```
+
+Com o melhor k definido vamos criar ver a sua acurácia no conjunto de teste e a matriz de confusão, já que nesse problema especifico vamos tambem avaliar a sensibilidade e a especificidade do modelo.
+
+```{r knn parte 3}
+
+modelo_knn <- knn(train = treino[,-1], test = teste[,-1], cl = treino$diagnosis, k = melhor_k)
+
+acuraciaknn <- mean(modelo_knn == teste$diagnosis)
+acuraciaknn
+
+matrizknn <- table(teste$diagnosis, modelo_knn)
+matrizknn
+```
+
+## Arvore de decisão
+
+Agora vamos fazer o modelo de arvore de decisão. Primeiro vamos ler a biblioteca e fazer o modelo com a biblioteca rpart, já que nela temos recursos visuais melhores. Tambem vamos fazer a matriz de confusão e a acurácia do modelo.
+
+```{r arvore parte 1}
+library(rpart)
+library(rpart.plot)
+
+modeloarvore <- rpart(formula = diagnosis~., data = treino, method = "class")
+rpart.plot(modeloarvore, extra = 101)
+
+acuraciarplot <- mean(predict(modeloarvore, newdata = teste, type = "class")==teste$diagnosis)
+matrizarvore <- table(teste$diagnosis, predict(modeloarvore, newdata = teste, type = "class"))
+matrizarvore
+```
+
+Agora seguiremos o mesmo caminho, porem com a biblioteca tree já que com ela podemos fazer a poda da arvore e ver qual o melhor tamanho de arvore.
+
+```{r arvore parte 2}
+library(tree)
+
+tree <- tree(data = treino, formula = diagnosis~., split = "gini")
+plot(tree)
+text(tree, pretty = 0)
+
+previsao.cancer <- predict(tree, newdata = teste, type = "class")
+mean(previsao.cancer==teste$diagnosis)
+
+cv.cancer <- cv.tree(tree, FUN = prune.misclass)
+cv.cancer
+
+arvore.podada <- prune.misclass(tree, best = 10)
+previsao.podagem <- predict(arvore.podada, newdata = teste, type = "class")
+acuraciatree <- mean(previsao.podagem == teste$diagnosis)
+matrizarvore2 <- table(teste$diagnosis, previsao.podagem)
+matrizarvore2
+
+```
+Podemos comcluir que a arvore podada traz melhores resultados com menos galhos, ou seja um processamento menor.
+
+## Floresta Aleatoria
+
+Vamos seguir por um caminho parecido com o da arvore de decisão, porem com a biblioteca randomForest. Primeiro vamos fazer o modelo e depois vamos fazer a matriz de confusão e a acurácia do modelo.
+
+```{r floresta aleatoria}
+library(randomForest)
+modelofloresta <- randomForest(diagnosis~., treino, importance = TRUE)
+modelofloresta
+
+importance(modelofloresta)
+acuraciafloresta <- mean(predict(modelofloresta, newdata = teste, type = "class")==teste$diagnosis)
+acuraciafloresta
+
+matrizfloresta <- table(teste$diagnosis, predict(modelofloresta, newdata = teste, type = "class"))
+matrizfloresta
+```
+
+# Conclusão
+
+Com os modelos feitos podemos ver que o melhor modelo foi o de floresta aleatoria junto do knn com a melhor acuracia, porem o knn possui a melhor sensibilidade e tambem a maior espeficidade. Na sequencia vem o arvore podada, arvore sem poda. Porem usando esses modelos, percebi que em varias seeds diferentes obtive acuracias diferentes e sempre alternando qual era o melhor modelo.
+
+```{r exibir-tabelas, results='asis', warning=FALSE, echo=FALSE}
+library(flextable)
+
+# Criar uma tabela com as acurácias
+tabela_acuracias <- data.frame(
+  Modelo = c("KNN", "Arvore (rpart)", "Arvore (tree)", "Floresta aleatoria"),
+  Acuracia = c(acuraciaknn, acuraciarplot, acuraciatree, acuraciafloresta)
+)
+
+tabela_acuracias %>% 
+  flextable() %>% 
+  set_caption("Tabela 1 - Acuracias dos modelos") %>% 
+  theme_booktabs() %>% 
+  autofit()
+```
+
+```{r tabela matrizes}
+
+matrizknn
+matrizarvore
+matrizarvore2
+matrizfloresta
+
+```
