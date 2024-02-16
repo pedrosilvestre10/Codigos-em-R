@@ -1,0 +1,91 @@
+---
+title: "Titanic"
+author: "Pedro Silvestre"
+date: "2023-08-27"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+```
+
+## 1. Introdução
+
+Neste projeto vamos analisar e fazer uma estatistica descritiva do conjunto de dados do titanic, em que temos algumas variaveis que podem ou não explicar qual a probabilidade de cada passageiro sobreviver ou não ao disastre.
+
+No primeiro momento vamos apenas analisar os graficos e tirar algumas conclusões acerca destas váriaveis.
+
+
+```{r lendo os dados}
+titanic <- read.csv("titanic.csv")
+summary(titanic)
+str(titanic)
+```
+
+Como podemos ver temos 891 observações e 12 variaveis, das quais a primeira apenas enumera nossa base de dados portanto não será necessária para a nossa analise.
+
+Vamos aproveitar e transformar as variaveis necessárias em fatores.
+
+```{r ajustando os dados e transformando em fator}
+titanic$Survived <- as.factor(titanic$Survived)
+titanic$Sex <- as.factor(titanic$Sex)
+titanic$Embarked <- as.factor(titanic$Embarked)
+titanic$Pclass <- as.factor(titanic$Pclass)
+titanic <- titanic[,-1]
+
+```
+
+
+## 2. Analise dos dados
+
+O primeiro gráfico que resolvi analisar foi o de morte de acordo com o sexo:
+
+```{r grafico sexo, echo=FALSE}
+ggplot(data = titanic, aes(x = Sex, fill = Survived))+
+  geom_bar()+
+  labs(title = "Morte por sexo",
+       x = "Sexo",
+       y = "Quantidade")+
+  scale_fill_discrete(name = "Sobrevivencia", labels = c("Não sobreviveu", "Sobreviveu"))
+```
+Como podemos observar, a taxa de sobrevivencia das mulheres foi muito maior.
+
+Outra variavel altamente explicativa é a classe, como podemos ver abaixo:
+
+```{r grafico classe, echo=FALSE}
+ggplot(data = titanic, aes(x = Pclass, fill = Survived))+
+  geom_bar()+
+  labs(title = "Morte por classe",
+       x = "Classe",
+       y = "Quantidade")+
+  scale_fill_discrete(name = "Sobrevivencia", labels = c("Não sobreviveu", "Sobreviveu"))
+```
+
+Quem era da classe 3 estava muito mais sucetivel a não sobrevivencia.
+
+Outra variavel que podemos observar é onde o individuo embarcou:
+
+```{r grafico embarque, echo=FALSE}
+ggplot(data = titanic, aes(x = Embarked, fill = Survived))+
+  geom_bar()+
+  labs(title = "Morte por local de embarque",
+       x = "Local de embarque",
+       y = "Quantidade")+
+  scale_fill_discrete(name = "Sobrevivencia", labels = c("Não sobreviveu", "Sobreviveu"))
+```
+
+Já a idade é uma variavel com muitos dados faltante, como o numero de dados faltantes é alto, irei atribir a cada valor "NA", a média de idade dos restantes.
+
+```{r corrigindo as idades faltantes e grafio, echo=FALSE}
+faltantes <- is.na(titanic$Age)
+
+titanic[faltantes,5] <- round(mean(titanic[!faltantes,5]))
+
+ggplot(data = titanic, aes(x = Age, fill = Survived))+
+  geom_bar()+
+  labs(title = "Grafico por idade",
+       x = "Idade",
+       y = "Quantidade")+
+  scale_fill_discrete(name = "Sobrevivencia", labels = c("Não sobreviveu", "Sobreviveu"))
+```

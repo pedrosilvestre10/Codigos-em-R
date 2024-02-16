@@ -1,0 +1,148 @@
+y = c(246, 17, 458, 32) 
+y
+
+armor =factor (c(1, 1, 2, 2)) 
+armor
+
+sexo = factor(c(1, 2, 1, 2))
+sexo
+
+count.dat = data.frame(armor, sexo, y)
+count.dat
+
+m = matrix(y, ncol = 2)
+m
+
+attach(count.dat) 
+
+#razão de chantes observada
+246*32/ (17*458)
+### A razão de chances observada compara a chance de sucesso entre dois grupos. O resultado de 1.011045 
+## indica que a cor da armadilha adesiva não tem influência significativa na atração de insetos machos ou fêmeas.
+## A chance de um inseto do sexo 1 ser atraído pela cor 1 de armadilha é 1,01 vezes maior do que a chance de ser 
+## atraído pela cor 2, quando comparado com o sexo 2.
+
+
+
+mod1=glm(y ~ armor*sexo, family=poisson)
+mod1
+
+
+anova (mod1, test = "Chisq") 
+summary (mod1)
+### O modelo de regressão ajustado é um modelo de regressão de Poisson generalizado (GLM) 
+## que tem como variável resposta "y" e como variáveis preditoras a cor da armadilha ("armor") e o sexo dos insetos 
+## ("sexo"), incluindo a interação entre as duas variáveis preditoras.
+## Os resultados indicam que a cor da armadilha e o sexo dos insetos são ambos significantemente associados
+## com o número de insetos capturados. Mais especificamente, insetos capturados foram significativamente 
+## diferentes entre as duas cores de armadilha ("armor"), com um aumento de 0,62 no log do número de insetos 
+## capturados para a segunda cor da armadilha em relação à primeira. O sexo dos insetos também foi significativamente associado 
+## com o número de insetos capturados, com um log de 2,67 unidades a menos no número de insetos capturados para os insetos do sexo 2 
+## em relação ao sexo 1. No entanto, não houve evidências significativas de interação entre a cor da armadilha e o sexo dos insetos.
+## Os valores das deviances residual e nula indicam que o modelo ajustado se ajustou bem aos dados, com um ajuste muito bom, e o valor AIC 
+## sugere que o modelo ajustado tem um bom poder de predição. A tabela de análise de deviance mostra que cada termo adicionado (cor da armadilha, sexo e interação) melhora significativamente a qualidade do ajuste do modelo.
+
+#If the interaction term is not significant, so we cannot reject the hypothesis that the odds-ratio is 
+#1, i.e. traps colour and sex are independent
+
+
+#note that this model reproduces the data also the fitted |Log-odds ratio is 0.01098 giving a fitted odds-ratio of
+exp (mod1$coef[4])
+### O resultado exp(mod1$coef[4]) é igual a 1.011045. Isso indica que a chance de um inseto do sexo 1 ser atraído
+## pela cor 1 de armadilha é 1,01 vezes maior do que a chance de ser atraído pela cor 2 de armadilha, quando comparado com o sexo 2. 
+## No entanto, como o intervalo de confiança inclui o valor 1, não podemos afirmar com certeza que essa diferença é estatisticamente significativa.
+## Portanto, não há evidências de que a cor da armadilha adesiva influencie significativamente a atração de insetos machos ou fêmeas.
+
+
+
+#Estimates for the main effects, or independence model
+
+mod2 = glm(y ~ armor+sexo, family = poisson)
+mod2
+
+anova(mod2,test="Chisq")
+summary(mod2)
+
+
+### O modelo mod2 é um modelo de regressão de Poisson que visa avaliar o efeito da cor da armadilha (armor) e sexo (sexo) dos insetos na contagem de insetos capturados (y).
+## O valor do Intercepto é 5.5049, o que significa que, para os insetos de cor padrão do sexo feminino (grupo de referência), espera-se que a contagem média de insetos capturados seja exp(5.5049) = 246,24.
+## Para os insetos que são do sexo masculino (grupo sexo2), o coeficiente para o sexo é -2.6650. Isso significa que, após ajustar para o efeito da cor da armadilha, espera-se 
+## que a contagem média de insetos capturados no grupo sexo2 seja exp(-2.6650) = 0,069 vezes menor do que no grupo de referência (insetos de cor padrão do sexo feminino).
+## Para a cor da armadilha, o coeficiente para armor2 é 0.6223. Isso significa que, após ajustar para o efeito do sexo, espera-se que a contagem média de insetos capturados 
+## no grupo armor2 seja exp(0.6223) = 1,86 vezes maior do que no grupo de referência (insetos de cor padrão).
+## O teste de hipótese de deviance mostra que tanto a cor da armadilha quanto o sexo dos insetos são significativamente associados à contagem de insetos capturados. 
+## A estatística de teste e o valor p indicam que tanto a cor da armadilha quanto o sexo dos insetos apresentam efeitos significativos na contagem de insetos capturados.
+
+
+
+_______________________________________________________________________________________________________________________
+# TRABALHO:
+
+y = c(61,73,41,70)
+y
+
+diametro = factor(c(1,1,2,2))
+diametro
+
+altura = factor(c(1,2,1,2))
+altura
+
+count.dat = data.frame(diametro,altura,y)
+count.dat
+
+m = matrix(y, ncol = 2)
+m
+
+colnames(m) = levels(diametro)
+rownames(m) = levels(altura)
+m
+
+#Razao de chances observadas
+psi = (61*70)/(41*73)
+psi
+
+## É utilizada a regressão de Poisson em que a variável
+## dependente "y" é modelada pelas variáveis independentes "diametro" e
+## "altura", além de uma interação entre elas.
+mod1 = glm(y~diametro*altura,family = poisson)
+mod1
+
+
+anova(mod1,test = "Chisq")
+#o termo de iteracao nao é significativo, portanto nao podemos rejeitar a hipotese
+#de que a cor das armadilhas e o sexo sao variaveis independentes
+
+### (gui) O modelo incluindo o efeito principal de "altura" é estatisticamente
+### significativo para explicar a variação em "y", enquanto o efeito principal de
+### "diametro" e a interação entre "diametro" e "altura" não são significativos.
+### Portanto, não temos evidências suficientes para se rejeitar a hipótese que
+### nos diz que as variáveis diâmetro e altura são independentes.
+
+summary(mod1)
+### Através do summary do primeiro modelo, nota-se que o p-valor para a
+### variável diametro2:altura2 é maior que 0,05, indicando que a interação entre as
+### variáveis não é significativa para explicar a variação em y.
+
+
+### Efeito da interação entre as variáveis "diametro" e "altura" na variável
+### dependente "y":
+exp(mod1$coef[4])
+
+### É utilizada a regressão de Poisson em que a variável
+### dependente "y" é modelada pelas variáveis independentes "diametro" e
+### "altura", sem uma interação entre elas.
+mod2 = glm(y~diametro+altura,family = poisson)
+anova(mod2,test = "Chisq")
+### Os resultados indicam que a variável "altura" é significativa para explicar a
+### resposta "y”, enquanto a variável "diametro" não é significativa
+
+summary(mod2)
+
+#conclusao
+### Podemos concluir então que, como a interação entre as variáveis diâmetro e
+### altura não foram significativas, portanto, a 5% de significância não temos
+### evidencias suficientes para concluir que as variáveis são dependentes. Logo, as
+### variáveis são independentes.
+  
+
+
